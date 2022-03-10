@@ -166,6 +166,7 @@ sleep(2000).then(() => {
         pickable: true,
         getHexagon: d=> d.hex,
         getFillColor: d=> {if (d.hex==h3.geoToH3(Number(coords[1]), Number(coords[0]), 8)){return [0, 32, 255]}else{return [255, (d.scores/20) * 255, 0]}},
+        onClick: (info, event) => window.open('https://www.airbnb.com/new-york-ny/stays'),
         updateTriggers: {
       // This tells deck.gl to recalculate radius when `currentYear` changes
       getFillColor: coords[1]
