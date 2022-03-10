@@ -1,0 +1,235 @@
+<html>
+  <head>
+    <title>NYC Airbnb Pricing</title>
+    <script src="https://unpkg.com/h3-js@3.7.2/dist/h3-js.umd.js"></script>
+    <script src="https://unpkg.com/deck.gl@^8.0.0/dist.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.4.0/mapbox-gl.js"></script>
+
+    <style type="text/css">
+      body {
+        font-family: Helvetica, Arial, sans-serif;
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+      }
+
+      #control-panel {
+        position: absolute;
+        top: 0;
+        left: 0;
+        margin: 12px;
+        padding: 20px;
+        font-size: 12px;
+        line-height: 1.5;
+        z-index: 1;
+        background: #fff;
+        font-family: Helvetica, Arial, sans-serif;
+        box-shadow: 0 0 4px rgba(0, 0, 0, 0.15);
+      }
+
+      label {
+        display: inline-block;
+        width: 140px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="control-panel">
+        <div>
+          <label>Coverage</label>
+          <input id="coverage" type="range" min="0" max="1" step="0.1" value="1"></input>
+          <span id="coverage-value"></span>
+        </div>
+        <div>
+          <label>Opacity</label>
+          <input id="opacity" type="range" min="0" max="1" step="0.1" value="1"></input>
+          <span id="opacity-value"></span>    
+        </div>
+        <br>
+        <br>
+        <br>
+        <div>
+            <label>Address</label>
+            <input id="address" type="text" value="20 W 34th St, New York, NY 10001"></input>
+            <span id="address-value"></span>    
+        </div>
+        <div>
+            <input id="recalc" type="button" value="Find Your Airbnb"></input>
+            <span id="recalc-value"></span>    
+        </div>
+        <div>
+            <span id="lat-value"></span>   
+        </div>      
+      </div>
+  </body>
+
+  
+
+  <script type="text/javascript">
+
+    const {DeckGL, H3HexagonLayer, IconLayer} = deck;
+
+    const deckgl = new DeckGL({
+      mapStyle: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+      initialViewState: {
+        longitude: -73.916246,
+        latitude: 40.67414229,
+        zoom: 9.9,
+        minZoom: 3,
+        maxZoom: 17,
+        pitch: 50,
+        bearing: 270
+      },
+      controller: true
+    });
+    
+    let data = null;
+
+    const OPTIONS = ['coverage', 'opacity'];
+
+    const COLOR_RANGE = [
+      [1, 152, 189],
+      [73, 227, 206],
+      [216, 254, 181],
+      [254, 237, 177],
+      [254, 173, 84],
+      [209, 55, 78]
+    ];
+
+    OPTIONS.forEach(key => {
+      document.getElementById(key).oninput = renderLayer;
+    });
+
+    document.getElementById('recalc').onclick = renderLayer;
+
+
+    function renderLayer () {
+        const options = {};
+      OPTIONS.forEach(key => {
+        const value = document.getElementById(key).value;
+        document.getElementById(key + '-value').innerHTML = value;
+        options[key] = Number(value);
+      });
+      
+      const address = document.getElementById('address').value;
+      const myAPIKey = '4140f161ad0742a7947d182933aef03a';
+      const geocodingUrl = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(address)}&apiKey=${myAPIKey}`;
+      var coords=[];
+      fetch(geocodingUrl).then(result => result.json()).then(featureCollection => {
+      if (featureCollection.features.length === 0) {
+        document.getElementById("lat-value").innerHTML = "The address is not found";
+        return;
+      }
+
+      const foundAddress = featureCollection.features[0];
+      const lat1 = Number(foundAddress.properties.lat)
+      const lon1 = Number(foundAddress.properties.lon)
+      coords.push(lon1)
+      coords.push(lat1)
+
+    
+    });
+    
+    
+    function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+sleep(2000).then(() => { 
+    console.log(coords)
+    
+
+      
+
+      const hexagonLayer = new H3HexagonLayer({
+        id: 'heatmap',
+        //colorRange: COLOR_RANGE,
+        
+        data,
+        //elevationRange: [0, 100],
+        getElevation: d => d.price,
+        elevationScale: 5,
+        //opacity: 0.8,
+        wireframe: false,
+        filled: true,
+        extruded: true,
+        pickable: true,
+        getHexagon: d=> d.hex,
+        getFillColor: d=> {if (d.hex==h3.geoToH3(Number(coords[1]), Number(coords[0]), 8)){return [0, 32, 255]}else{return [255, (d.scores/20) * 255, 0]}},
+        updateTriggers: {
+      // This tells deck.gl to recalculate radius when `currentYear` changes
+      getFillColor: coords[1]
+    },
+        //getFillColor: [209, 55, 78],
+        ...options
+        //getPosition: d => [d.lon,d.lat],
+      });
+/*
+      const ICON_MAPPING = {
+  marker: {x: 0, y: 0, width: 1980, height: 1980, mask: true}
+};
+
+      const layer = new IconLayer({
+    id: 'icon-layer',
+    data: [{position: [coords[0],coords[1]]}],
+    pickable: true,
+    // iconAtlas and iconMapping are required
+    // getIcon: return a string
+    iconAtlas: 'https://i.imgur.com/jRfjvrz.png',
+    iconMapping: ICON_MAPPING,
+    getIcon: d=> 'marker',
+
+    sizeScale: 20,
+    getPosition: d=> d.position,
+    getSize: d=> 5,
+    getColor: d=> [0, 32, 255]
+  });
+*/
+      deckgl.setProps({
+        layers: [hexagonLayer],
+        getTooltip: ({object}) => object && `Neighborhood: ${object.nhood} \n Avg Price Per Night: $${object.price.toFixed(2)} \n Avg Bedrooms: ${object.bedrooms.toFixed(2)} \n Avg Bathrooms: ${object.bathrooms.toFixed(2)} \n Avg Days Available Per Month: ${object.scores.toFixed(2)} \n Num of Airbnbs: ${object.count}`
+      });
+
+    });
+    }
+
+    d3.csv('New York.csv')
+      .then(response => {
+      data = response.map(d => ({nhood: d.neighbourhood_cleansed, bedrooms: Number(d.bedrooms), bathrooms: Number(d.bathrooms), scores: Number(d.availability_30), hex: h3.geoToH3(Number(d.latitude), Number(d.longitude), 8), lon: Number(d.longitude), lat: Number(d.latitude), price: Number(1.147*d.price/d.minimum_nights)}));
+      console.log(data);
+      
+      // Calculate the sums and group data (while tracking count)
+      data = data.reduce(function(m, d){
+          if(!m[d.hex]){
+              m[d.hex] = {...d, count: 1};
+              return m;
+            }
+            m[d.hex].price += d.price;
+            m[d.hex].scores += d.scores;
+            m[d.hex].bedrooms += d.bedrooms;
+            m[d.hex].bathrooms += d.bathrooms;
+            m[d.hex].count += 1;
+            m[d.hex].nhood = d.nhood;
+            return m;
+        },{});
+ 
+      // Create new array from grouped data and compute the average
+      data = Object.keys(data).map(function(k){
+          item  = data[k];
+          return {
+              hex: item.hex,
+              count: item.count,
+              price: item.price/item.count,
+              scores: item.scores/item.count,
+              bedrooms: item.bedrooms/item.count,
+              bathrooms: item.bathrooms/item.count,
+              nhood: item.nhood
+            }
+      })
+      console.log(data);
+      
+      renderLayer();
+    });
+  </script>
+</html>
