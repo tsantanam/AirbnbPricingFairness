@@ -47,6 +47,11 @@
           <input id="opacity" type="range" min="0" max="1" step="0.1" value="1"></input>
           <span id="opacity-value"></span>    
         </div>
+        <div>
+            <label for="color">Color Inversion</label>
+            <input id="color" type="checkbox" name="color"></input>
+            <span id="color-value"></span>    
+          </div>   
         <br>
         <br>
         <br>
@@ -67,7 +72,7 @@
         <br>
         <br>
         <div>
-            <span id="dir-value">Compare Airbnbs across NYC! If you have an Airbnb address or target neighborhood/area address, enter it in the field above and press the button to refresh the visualization. It may take 3-5 seconds for the visualization to render. The area of NYC with your target address/neighborhood is in blue. The redder colored areas represent places with more occupied Airbnbs, while greener areas are more available. The taller the hexagon for an area, the more expensive Airbnbs in that area are. Hovering over any hexagon area will also give you more historical Airbnb information to help you make the best Airbnb decision possible!</span>   
+            <span id="dir-value">Compare Airbnbs across NYC! If you have an Airbnb address or target neighborhood/area address, enter it in the field above and press the button to refresh the visualization. It may take 3-5 seconds for the visualization to render. The area of NYC with your target address/neighborhood is in blue. The redder colored areas represent places with more occupied Airbnbs, while greener areas are more available. The taller the hexagon for an area, the more expensive Airbnbs in that area are. Hovering over any hexagon area will also give you more historical Airbnb information to help you make the best Airbnb decision possible! The color inversion checkbox will flip the color schemes, while the opacity and coverage sliders will change hexagon size and visibility.</span>   
         </div>      
       </div>
   </body>
@@ -110,6 +115,7 @@
     });
 
     document.getElementById('recalc').onclick = renderLayer;
+    document.getElementById('color').oninput = renderLayer;
 
 
     function renderLayer () {
@@ -164,10 +170,11 @@ sleep(2000).then(() => {
         extruded: true,
         pickable: true,
         getHexagon: d=> d.hex,
-        getFillColor: d=> {if (d.hex==h3.geoToH3(Number(coords[1]), Number(coords[0]), 8)){return [0, 32, 255]}else{return [255, (d.scores/20) * 255, 0]}},
+        getFillColor: d=> {if(document.getElementById('color').checked==true){if (d.hex==h3.geoToH3(Number(coords[1]), Number(coords[0]), 8)){return [255, 32, 0]}else{return [0, (d.scores/20) * 255, 255]}}else{if (d.hex==h3.geoToH3(Number(coords[1]), Number(coords[0]), 8)){return [0, 32, 255]}else{return [255, (d.scores/20) * 255, 0]}}},
         updateTriggers: {
       // This tells deck.gl to recalculate radius when `currentYear` changes
-      getFillColor: coords[1]
+      getFillColor: coords[1],
+      getFillColor: document.getElementById('color').checked
     },
         //getFillColor: [209, 55, 78],
         ...options
