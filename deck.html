@@ -199,15 +199,15 @@ sleep(2000).then(() => {
 */
       deckgl.setProps({
         layers: [hexagonLayer],
-        getTooltip: ({object}) => object && `Neighborhood: ${object.nhood} \n Avg Price Per Night: $${object.price.toFixed(2)} \n Avg Bedrooms: ${object.bedrooms.toFixed(2)} \n Avg Bathrooms: ${object.bathrooms.toFixed(2)} \n Avg Days Available Per Month: ${object.scores.toFixed(2)} \n Num of Airbnbs: ${object.count}`
+        getTooltip: ({object}) => object && `Neighborhood: ${object.nhood} \n Avg Price Per Night: $${object.price.toFixed(2)} \n Avg Bedrooms: ${object.bedrooms.toFixed(2)} \n Avg Bathrooms: ${object.bathrooms.toFixed(2)} \n Avg Days Available Per Month: ${object.scores.toFixed(2)} \n Avg Fair Price: ${object.exp.toFixed(2)} \n Avg Bargain Index: ${object.barg.toFixed(2)} \n Num of Airbnbs: ${object.count}`
       });
 
     });
     }
 
-    d3.csv('New York.csv')
+    d3.csv('Airbnb_Fairness_v1.csv')
       .then(response => {
-      data = response.map(d => ({nhood: d.neighbourhood_cleansed, bedrooms: Number(d.bedrooms), bathrooms: Number(d.bathrooms), scores: Number(d.availability_30), hex: h3.geoToH3(Number(d.latitude), Number(d.longitude), 8), lon: Number(d.longitude), lat: Number(d.latitude), price: Number(1.147*d.price/d.minimum_nights)}));
+      data = response.map(d => ({barg: Number(d.Bargain_Index), exp: Number(d.Exp_Price), nhood: d.neighbourhood_cleansed, bedrooms: Number(d.bedrooms), bathrooms: Number(d.bathrooms), scores: Number(d.availability_30), hex: h3.geoToH3(Number(d.latitude), Number(d.longitude), 8), lon: Number(d.longitude), lat: Number(d.latitude), price: Number(1.147*d.price/d.minimum_nights)}));
       console.log(data);
       
       // Calculate the sums and group data (while tracking count)
@@ -222,6 +222,8 @@ sleep(2000).then(() => {
             m[d.hex].bathrooms += d.bathrooms;
             m[d.hex].count += 1;
             m[d.hex].nhood = d.nhood;
+            m[d.hex].exp += d.exp;
+            m[d.hex].barg += d.barg;
             return m;
         },{});
  
@@ -235,6 +237,8 @@ sleep(2000).then(() => {
               scores: item.scores/item.count,
               bedrooms: item.bedrooms/item.count,
               bathrooms: item.bathrooms/item.count,
+              exp: item.exp/item.count,
+              barg: item.barg/item.count,
               nhood: item.nhood
             }
       })
