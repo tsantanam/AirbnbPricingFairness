@@ -199,7 +199,7 @@ sleep(2000).then(() => {
 */
       deckgl.setProps({
         layers: [hexagonLayer],
-        getTooltip: ({object}) => object && `Neighborhood: ${object.nhood} \n Avg Price Per Night: $${object.price.toFixed(2)} \n Avg Bedrooms: ${object.bedrooms.toFixed(2)} \n Avg Bathrooms: ${object.bathrooms.toFixed(2)} \n Avg Days Available Per Month: ${object.scores.toFixed(2)} \n Avg Fair Price: ${object.exp.toFixed(2)} \n Avg Bargain Index: ${object.barg.toFixed(2)} \n Num of Airbnbs: ${object.count}`
+        getTooltip: ({object}) => object && `Neighborhood: ${object.nhood} \n Avg Price Per Night: $${object.price.toFixed(2)} \n Avg Bedrooms: ${object.bedrooms.toFixed(2)} \n Avg Bathrooms: ${object.bathrooms.toFixed(2)} \n Avg Days Available Per Month: ${object.scores.toFixed(2)} \n Avg Fair Price: $${object.exp.toFixed(2)} \n Avg Bargain Index: ${object.barg.toFixed(2)} \n Num of Airbnbs: ${object.count}`
       });
 
     });
@@ -207,11 +207,11 @@ sleep(2000).then(() => {
 
     d3.csv('Airbnb_Fairness_v1.csv')
       .then(response => {
-      data = response.map(d => ({barg: Number(d.Bargain_Index), exp: Number(d.Exp_Price), nhood: d.neighbourhood_cleansed, bedrooms: Number(d.bedrooms), bathrooms: Number(d.bathrooms), scores: Number(d.availability_30), hex: h3.geoToH3(Number(d.latitude), Number(d.longitude), 8), lon: Number(d.longitude), lat: Number(d.latitude), price: Number(1.147*d.price/d.minimum_nights)}));
+      data = response.map(d => ({barg: Number(Number(d.Bargain_Index).toFixed(2)), exp: Number(Number(1.147*d.Exp_Price/d.minimum_nights).toFixed(2)), nhood: d.neighbourhood_cleansed, bedrooms: Number(d.bedrooms), bathrooms: Number(d.bathrooms), scores: Number(d.availability_30), hex: h3.geoToH3(Number(d.latitude), Number(d.longitude), 8), lon: Number(d.longitude), lat: Number(d.latitude), price: Number(1.147*d.price/d.minimum_nights)}));
       console.log(data);
       
       // Calculate the sums and group data (while tracking count)
-      data = data.reduce(function(m, d){
+      data = data.reduce(function(m, d, x){
           if(!m[d.hex]){
               m[d.hex] = {...d, count: 1};
               return m;
@@ -237,8 +237,8 @@ sleep(2000).then(() => {
               scores: item.scores/item.count,
               bedrooms: item.bedrooms/item.count,
               bathrooms: item.bathrooms/item.count,
-              exp: item.exp/item.count,
-              barg: item.barg/item.count,
+              exp: Number(item.exp/item.count),
+              barg: Number(item.barg/item.count),
               nhood: item.nhood
             }
       })
