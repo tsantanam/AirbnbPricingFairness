@@ -216,15 +216,17 @@ sleep(2000).then(() => {
               m[d.hex] = {...d, count: 1};
               return m;
             }
-            m[d.hex].price += d.price;
-            m[d.hex].scores += d.scores;
-            m[d.hex].bedrooms += d.bedrooms;
-            m[d.hex].bathrooms += d.bathrooms;
-            m[d.hex].count += 1;
-            m[d.hex].nhood = d.nhood;
-            m[d.hex].exp += d.exp;
-            m[d.hex].barg += d.barg;
-            return m;
+            if (d.barg>=0) {
+              m[d.hex].price += d.price;
+              m[d.hex].scores += d.scores;
+              m[d.hex].bedrooms += d.bedrooms;
+              m[d.hex].bathrooms += d.bathrooms;
+              m[d.hex].count += 1;
+              m[d.hex].nhood = d.nhood;
+              m[d.hex].exp += d.exp;
+              m[d.hex].barg += d.barg;
+              return m; }
+            else {return m;}  
         },{});
  
       // Create new array from grouped data and compute the average
